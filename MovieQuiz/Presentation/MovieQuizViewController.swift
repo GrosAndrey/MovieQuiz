@@ -51,9 +51,14 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
     @IBOutlet weak private var counterLabel: UILabel!
+    @IBOutlet weak private var yesButton: UIButton!
+    @IBOutlet weak private var noButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        imageView.layer.masksToBounds = true
+        imageView.layer.cornerRadius = 6
         
         let currentQuestion = questions[currentQuestionIndex]
         let questionModel = convert(model: currentQuestion)
@@ -94,6 +99,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func checkAnswer(answer: Bool) {
+        changeButtonActivity(isEnabled: false)
         let currentQuestion = questions[currentQuestionIndex]
         showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
     }
@@ -103,10 +109,8 @@ final class MovieQuizViewController: UIViewController {
             correctAnswers += 1
         }
         
-        imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        imageView.layer.cornerRadius = 6
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResults()
@@ -131,6 +135,12 @@ final class MovieQuizViewController: UIViewController {
             show(quiz: viewModel)
         }
         imageView.layer.borderWidth = 0
+        changeButtonActivity(isEnabled: true)
+    }
+    
+    private func changeButtonActivity(isEnabled: Bool) {
+        yesButton.isEnabled = isEnabled
+        noButton.isEnabled = isEnabled
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
