@@ -10,6 +10,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter = AlertPresenter()
+    private var statisticService: StatisticServiceProtocol?
     
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
@@ -21,6 +22,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         
         questionFactory = QuestionFactory(delegate: self)
+        statisticService = StatisticService()
         
         imageView.layer.masksToBounds = true
         imageView.layer.cornerRadius = 20
@@ -95,9 +97,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
+            statisticService?.store(correct: correctAnswers, total: questionsAmount)
+            let message: String = createMessageResult()
             let resultQuiz: QuizResultsViewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен",
-                text: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
+                text: message,
                 buttonText: "Сыграть еще раз")
             
             show(quiz: resultQuiz)
@@ -109,6 +113,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         imageView.layer.borderWidth = 0
         changeButtonActivity(isEnabled: true)
+    }
+    
+    private func createMessageResult() -> String {
+        guard let statisticService = statisticService else {
+            return ""
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy"
+        let formattedDate = formatter.string(from: statisticService.bestGame.date)
+        
+        let message = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n" +
+            "Количество сыгранных квизов: \(statisticService.gamesCount)\n" +
+            "Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(formattedDate))\n" +
+            "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
+        return message
     }
     
     private func changeButtonActivity(isEnabled: Bool) {
