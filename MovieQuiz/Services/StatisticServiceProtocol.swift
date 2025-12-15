@@ -13,6 +13,7 @@ protocol StatisticServiceProtocol {
     var totalAccuracy: Double { get }
     
     func store(correct count: Int, total amount: Int)
+    func getResultGame(correct count: Int, total amount: Int) -> String
 }
 
 // Расширяем при объявлении
@@ -89,5 +90,17 @@ final class StatisticService: StatisticServiceProtocol {
         if currentGame.isBetterThan(bestGame) {
             bestGame = currentGame
         }
+    }
+    
+    func getResultGame(correct count: Int, total amount: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy"
+        let formattedDate = formatter.string(from: bestGame.date)
+        
+        let message = "Ваш результат: \(count)/\(amount)\n" +
+        "Количество сыгранных квизов: \(gamesCount)\n" +
+        "Рекорд: \(bestGame.correct)/\(bestGame.total) (\(formattedDate))\n" +
+        "Средняя точность: \(String(format: "%.2f", totalAccuracy))%"
+        return message
     }
 }

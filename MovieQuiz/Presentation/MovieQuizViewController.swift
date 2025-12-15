@@ -9,7 +9,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
-    private var alertPresenter = AlertPresenter()
+    private var alertPresenter = ResultAlertPresenter()
     private var statisticService: StatisticServiceProtocol?
     
     @IBOutlet weak private var imageView: UIImageView!
@@ -98,7 +98,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
             statisticService?.store(correct: correctAnswers, total: questionsAmount)
-            let message: String = createMessageResult()
+            let message: String = statisticService?.getResultGame(correct: correctAnswers, total: questionsAmount) ?? ""
             let resultQuiz: QuizResultsViewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен",
                 text: message,
@@ -108,27 +108,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             
         } else {
             currentQuestionIndex += 1
-            
-            questionFactory?.requestNextQuestion()
+            self.questionFactory?.requestNextQuestion()
         }
         imageView.layer.borderWidth = 0
         changeButtonActivity(isEnabled: true)
-    }
-    
-    private func createMessageResult() -> String {
-        guard let statisticService = statisticService else {
-            return ""
-        }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        let formattedDate = formatter.string(from: statisticService.bestGame.date)
-        
-        let message = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n" +
-            "Количество сыгранных квизов: \(statisticService.gamesCount)\n" +
-            "Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(formattedDate))\n" +
-            "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
-        return message
     }
     
     private func changeButtonActivity(isEnabled: Bool) {
