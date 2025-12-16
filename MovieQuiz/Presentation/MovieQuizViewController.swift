@@ -59,7 +59,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func show(quiz result: QuizResultsViewModel) {
-        let model = AlertModel(title: result.title, message: result.text, buttonText: result.buttonText) { [weak self] in
+        let model = AlertModel(title: result.title,
+                               message: result.text,
+                               buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
             
             self.currentQuestionIndex = 0
