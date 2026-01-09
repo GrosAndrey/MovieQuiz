@@ -25,8 +25,8 @@ struct NetworkClient {
             }
             
             // Проверяем, что нам пришёл успешный код ответа
-            if let response = response as? HTTPURLResponse,
-               response.statusCode < 200 || response.statusCode >= 300 {
+            guard let response = response as? HTTPURLResponse,
+                  200...299 ~= response.statusCode else {
                 handler(.failure(NetworkError.codeError))
                 return
             }
