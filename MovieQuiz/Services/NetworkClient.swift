@@ -1,0 +1,41 @@
+//
+//  NetworkClient.swift
+//  MovieQuiz
+//
+//  Created by Андрей Грошев on 03.01.2026.
+//
+
+import Foundation
+
+/// Отвечает за загрузку данных по URL
+struct NetworkClient {
+    
+    private enum NetworkError: Error {
+        case codeError
+    }
+    
+    func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
+        let request = URLRequest(url: url)
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            // Проверяем, пришла ли ошибка
+            if let error = error {
+                handler(.failure(error))
+                return
+            }
+            
+            // Проверяем, что нам пришёл успешный код ответа
+            guard let response = response as? HTTPURLResponse,
+                  200...299 ~= response.statusCode else {
+                handler(.failure(NetworkError.codeError))
+                return
+            }
+            
+            // Возвращаем данные
+            guard let data = data else { return }
+            handler(.success(data))
+        }
+        
+        task.resume()
+    }
+}
