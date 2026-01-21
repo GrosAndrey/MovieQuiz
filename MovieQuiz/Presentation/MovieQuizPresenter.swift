@@ -9,10 +9,17 @@ import Foundation
 
 final class MovieQuizPresenter {
     let questionsAmount: Int = 10
+    var correctAnswers: Int = 0
+    var questionFactory: QuestionFactoryProtocol?
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
     
     private var currentQuestionIndex: Int = 0
+    private var statisticService: StatisticServiceProtocol?
+    
+    init() {
+        self.statisticService = StatisticService()
+    }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
@@ -34,11 +41,52 @@ final class MovieQuizPresenter {
         currentQuestionIndex += 1
     }
     
-    func checkAnswer(answer: Bool) {
+    func yesButtonClicked() {
+        didAnswer(isYes: true)
+    }
+    
+    func noButtonClicked() {
+        didAnswer(isYes: false)
+    }
+    
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else {
             return
         }
         
-        viewController?.showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
+        let givenAnswer = isYes
+        
+        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func showNextQuestionOrResults() {
+        if self.isLastQuestion() {
+            statisticService?.store(correct: correctAnswers, total: self.questionsAmount)
+            let message: String = statisticService?.getResultGame(correct: correctAnswers, total: self.questionsAmount) ?? ""
+            let resultQuiz: QuizResultsViewModel = QuizResultsViewModel(
+                title: "Этот раунд окончен",
+                text: message,
+                buttonText: "Сыграть еще раз")
+            
+            viewController?.show(quiz: resultQuiz)
+            
+        } else {
+            self.switchToNextQuestion()
+            questionFactory?.requestNextQuestion()
+        }
+        viewController?.resetBorder()
+        viewController?.changeButtonActivity(isEnabled: true)
     }
 }
