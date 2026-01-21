@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
     let questionsAmount: Int = 10
     var correctAnswers: Int = 0
     var questionFactory: QuestionFactoryProtocol?
@@ -17,8 +17,13 @@ final class MovieQuizPresenter {
     private var currentQuestionIndex: Int = 0
     private var statisticService: StatisticServiceProtocol?
     
-    init() {
+    init(viewController: MovieQuizViewController) {
+        self.viewController = viewController
         self.statisticService = StatisticService()
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
     }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -36,6 +41,7 @@ final class MovieQuizPresenter {
     func restartGame() {
         currentQuestionIndex = 0
         correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     
     func switchToNextQuestion() {
@@ -76,6 +82,16 @@ final class MovieQuizPresenter {
         if isCorrectAnswer {
             correctAnswers += 1
         }
+    }
+    
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        let message = error.localizedDescription
+        viewController?.showNetworkError(message: message)
     }
     
     func showNextQuestionOrResults() {
