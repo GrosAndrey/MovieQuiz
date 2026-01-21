@@ -1,16 +1,12 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
-    // переменная с индексом текущего вопроса, начальное значение 0
-    private var currentQuestionIndex = 0
-    // переменная со счётчиком правильных ответов
     private var correctAnswers = 0
-    
-    private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter = ResultAlertPresenter()
     private var statisticService: StatisticServiceProtocol?
+    private let presenter = MovieQuizPresenter()
     
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
@@ -38,7 +34,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
@@ -49,22 +45,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         activityIndicator.isHidden = true
         questionFactory?.requestNextQuestion()
     }
-
+    
     func didFailToLoadData(with error: Error) {
         showNetworkError(message: error.localizedDescription)
     }
     
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep: QuizStepViewModel = QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        
-        return questionStep
-    }
-    
     private func show(quiz step: QuizStepViewModel) {
-        imageView.image = step.image
+        imageView.image = UIImage(data: step.image) ?? UIImage()
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
@@ -75,7 +62,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                                buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
             
-            self.currentQuestionIndex = 0
+            self.presenter.resetQuestionIndex()
             self.correctAnswers = 0
             
             questionFactory?.requestNextQuestion()
@@ -109,9 +96,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questionsAmount - 1 {
-            statisticService?.store(correct: correctAnswers, total: questionsAmount)
-            let message: String = statisticService?.getResultGame(correct: correctAnswers, total: questionsAmount) ?? ""
+        if presenter.isLastQuestion() {
+            statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
+            let message: String = statisticService?.getResultGame(correct: correctAnswers, total: presenter.questionsAmount) ?? ""
             let resultQuiz: QuizResultsViewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен",
                 text: message,
@@ -120,7 +107,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             show(quiz: resultQuiz)
             
         } else {
-            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             self.questionFactory?.requestNextQuestion()
         }
         imageView.layer.borderWidth = 0
@@ -140,7 +127,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                                buttonText: "Попробовать еще раз") { [weak self] in
             guard let self else { return }
             
-            self.currentQuestionIndex = 0
+            self.presenter.resetQuestionIndex()
             self.correctAnswers = 0
             
             self.showLoadingIndicator()
