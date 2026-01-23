@@ -40,15 +40,14 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testYesButton() {
-        sleep(3)
-        
         let firstPoster = app.images["Poster"]
+        XCTAssertTrue(firstPoster.waitForExistence(timeout: 5))
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["Yes"].tap()
-        sleep(3)
         
         let secondPoster = app.images["Poster"]
+        XCTAssertTrue(secondPoster.waitForExistence(timeout: 5))
         let secondPosterData = secondPoster.screenshot().pngRepresentation
         
         let indexLabel = app.staticTexts["Index"]
@@ -58,15 +57,14 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testNoButton() {
-        sleep(3)
-        
         let firstPoster = app.images["Poster"]
+        XCTAssertTrue(firstPoster.waitForExistence(timeout: 5))
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["No"].tap()
-        sleep(3)
         
         let secondPoster = app.images["Poster"]
+        XCTAssertTrue(secondPoster.waitForExistence(timeout: 5))
         let secondPosterData = secondPoster.screenshot().pngRepresentation
         
         let indexLabel = app.staticTexts["Index"]
@@ -76,13 +74,17 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testGameFinish() {
-        sleep(3)
         for _ in 1...10 {
-            app.buttons["No"].tap()
-            sleep(3)
+            let noButton = app.buttons["No"]
+            XCTAssertTrue(noButton.waitForExistence(timeout: 5))
+            noButton.tap()
         }
         
         let alert = app.alerts["Этот раунд окончен"]
+        let exists = NSPredicate(format: "exists == true")
+        expectation(for: exists, evaluatedWith: alert, handler: nil)
+        
+        waitForExpectations(timeout: 5)
         
         XCTAssertTrue(alert.exists)
         XCTAssertTrue(alert.label == "Этот раунд окончен")
@@ -90,16 +92,20 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testAlertDismiss() {
-        sleep(3)
         for _ in 1...10 {
-            app.buttons["No"].tap()
-            sleep(3)
+            let noButton = app.buttons["No"]
+            XCTAssertTrue(noButton.waitForExistence(timeout: 5))
+            noButton.tap()
         }
         
         let alert = app.alerts["Этот раунд окончен"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
         alert.buttons.firstMatch.tap()
         
-        sleep(3)
+        let alertDisappeared = NSPredicate(format: "exists == false")
+        expectation(for: alertDisappeared, evaluatedWith: alert, handler: nil)
+        
+        waitForExpectations(timeout: 5)
         
         let indexLabel = app.staticTexts["Index"]
         

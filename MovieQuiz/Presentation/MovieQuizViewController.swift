@@ -2,7 +2,7 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
     private var alertPresenter = ResultAlertPresenter()
-    private var presenter: MovieQuizPresenter!
+    private var presenter: MovieQuizPresenter?
     
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
@@ -22,7 +22,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     func show(quiz step: QuizStepViewModel) {
         imageView.layer.borderColor = UIColor.clear.cgColor
-        imageView.image = UIImage(data: step.image) ?? UIImage()
+        imageView.image = UIImage(data: step.imageData) ?? UIImage()
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
@@ -33,7 +33,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
                                buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
             
-            self.presenter.restartGame()
+            self.presenter?.restartGame()
         }
         
         alertPresenter.show(in: self, model: model)
@@ -52,7 +52,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
                                buttonText: "Попробовать еще раз") { [weak self] in
             guard let self else { return }
             
-            self.presenter.restartGame()
+            self.presenter?.restartGame()
             self.showLoadingIndicator()
         }
         
@@ -80,11 +80,11 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         changeButtonActivity(isEnabled: false)
-        presenter.yesButtonClicked()
+        presenter?.didAnswer(isYes: true)
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         changeButtonActivity(isEnabled: false)
-        presenter.noButtonClicked()
+        presenter?.didAnswer(isYes: false)
     }
 }
